@@ -90,8 +90,13 @@ resource "azurerm_virtual_machine" "main" {
   }
 }
 
+locals {
+  component = var.container ? "${var.component}-docker" : var.component
+}
+
 resource "null_resource" "ansible" {
   depends_on = [azurerm_virtual_machine.main]
+  count      = var.container ? 0 : 1
   provisioner "remote-exec" {
     connection {
       type     = "ssh"
@@ -103,7 +108,7 @@ resource "null_resource" "ansible" {
     inline = [
       "sudo dnf install python3.12-pip -y",
       "sudo pip3.12 install ansible hvac",
-      "ansible-pull -i localhost, -U https://github.com/koushikmandalika2411/Roboshop-ansible roboshop.yml -e app_name=${var.component} -e ENV=${var.env} -e vault_token=${var.vault_token}"
+      "ansible-pull -i localhost, -U https://github.com/koushikmandalika2411/Roboshop-ansible roboshop.yml -e app_name=${local.component} -e ENV=${var.env} -e vault_token=${var.vault_token}"
     ]
   }
 }
